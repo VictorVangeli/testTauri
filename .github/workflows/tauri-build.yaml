@@ -1,0 +1,43 @@
+name: Tauri Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-tauri:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+
+    steps:
+      # 1. Клонируем код
+      - uses: actions/checkout@v3
+
+      # 2. Устанавливаем Node (нужен для npm или yarn)
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      # 3. Устанавливаем Rust (на каждой платформе)
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      # 4. Устанавливаем зависимости (включая Tauri)
+      - name: Install dependencies
+        run: npm install
+
+      # 5. Сборка Tauri для каждой платформы
+      - name: Build Tauri
+        run: npm run tauri build
+
+      # 6. Загружаем результат (установочные файлы) как артефакты Actions
+      - name: Upload bundle
+        uses: actions/upload-artifact@v3
+        with:
+          name: tauri-bundle-${{ matrix.os }}
+          path: src-tauri/target/release/bundle
